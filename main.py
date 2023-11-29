@@ -2,24 +2,13 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import checkers_env
 
 import random
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-
-state_space = [State(i) for i in range(18)]
-start_board = [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1]
-
-actions = [Action(i) for i in range(2)]
-transition_model = TransitionModel()
-reward_model = RewardModel()
-initial_state = states[0]
-
-mdp = MDP(states, actions, transition_model, reward_model, initial_state)
-solver = Solver(mdp)
-solver.solve()
 
 def initialize_board():
     # 1 and -1 represent the pieces of two players 1 and -1
@@ -29,3 +18,12 @@ def initialize_board():
             board[i][j + (i % 2)] = 1
             board[6 - i - 1][j + (i % 2)] = -1
     return board
+
+
+env = checkers_env.checkers_env(initialize_board(), 1)
+env.render()
+starters = env.possible_pieces(1)
+env.possible_actions(player = 1)
+env.step([1,1,2,0],1)
+env.render()
+
