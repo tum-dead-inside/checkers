@@ -29,7 +29,7 @@ class solver:
         """
         self.memory.append(transition)
 
-    def policy_evaluation(self, state, action):
+    def generate_transition(self, state, action):
         """
         execute action and observe reward and next state
         :param state:
@@ -64,6 +64,8 @@ class solver:
         else:
             max_action = random.sample(self.env.possible_actions(player), 1)
         return max_action
+
+    def evaluation(self):
 
     def solve(self, episode, epsilon, batch_size):
         for t in episode:
