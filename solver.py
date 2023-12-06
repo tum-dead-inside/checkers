@@ -7,8 +7,28 @@ import matplotlib.pyplot as plt
 from collections import namedtuple, deque
 from itertools import count
 import checkers_env
+import numpy as np
 
 class solver:
+
+    def __init__(self, step_size, epsilon, env):
+
+        self.step_size = step_size
+        self.epsilon = epsilon
+        self.env = checkers_env.checkers_env( )
+        self.q_table = np.zeros(len(env.state_space), len(env.action_space))
+
+    def solve(self, episode):
+        for i in episode:
+            state = checkers_env.checkers_env.initialize_board()
+            a = self.policy_improvement()
+
+            # update Q value
+            q[state, action] =
+
+    def policy_improvement(self):
+
+        return a
 
     def __init__(self, capacity, q_func, env, player):
         """

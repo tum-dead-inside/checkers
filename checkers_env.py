@@ -56,7 +56,7 @@ class checkers_env:
         return actions
 
     def get_piece(self, action):
-        if action[2] - action [0] > 1:
+        if action[2] - action[0] > 1:
             # jump
             self.board[(action[0]+action[2])/2][(action[1]+action[3])/2] = 0
 
@@ -85,7 +85,7 @@ class checkers_env:
         else:
             reward = 0
 
-        return reward
+        return [self.board, reward]
 
     def render(self):
         for row in self.board:
