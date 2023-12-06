@@ -2,8 +2,6 @@
 import numpy as np
 
 
-
-
 class checkers_env:
 
     def __init__(self, board, player):
@@ -12,13 +10,21 @@ class checkers_env:
         self.player = player
 
     def reset(self):
-        self.board = [[ 1,0,1,0,1,0],
-                      [ 0,1,0,1,0,1],
-                      [ 0,0,0,0,0,0],
-                      [ 0,0,0,0,0,0],
-                      [ 0,-1,0,-1,0,-1],
-                      [-1,0,-1,0,-1,0]]
+        self.board = np.array([[1, 0, 1, 0, 1, 0],
+                      [0, 1, 0, 1, 0, 1],
+                      [0, 0, 0, 0, 0, 0],
+                      [0, 0, 0, 0, 0, 0],
+                      [0, -1, 0, -1, 0, -1],
+                      [-1, 0, -1, 0, -1, 0]])
         self.player = 1
+    def initialize_board(self):
+        # 1 and -1 represent the pieces of two players 1 and -1
+        board = np.zeros((6, 6))
+        for i in range(2):
+            for j in range(0, 6, 2):
+                board[i][j + (i % 2)] = 1
+                board[6 - i - 1][j + (i % 2)] = -1
+        return board
 
     def possible_pieces(self, player):
         positions = []
@@ -49,16 +55,15 @@ class checkers_env:
                                 actions.append([x,y,jx,jy])
         return actions
 
-
     def get_piece(self, action):
         if action[2] - action [0] > 1:
             # jump
             self.board[(action[0]+action[2])/2][(action[1]+action[3])/2] = 0
 
-    def game_winner(self):
-        if np.sum(self.board<0) == 0:
+    def game_winner(self, board):
+        if np.sum(board < 0) == 0:
             return 1
-        elif np.sum(self.board>0) == 0:
+        elif np.sum(board > 0) == 0:
             return -1
         elif len(self.possible_actions(-1)) == 0:
             return -1
