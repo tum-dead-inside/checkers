@@ -2,8 +2,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
-class CNN(nn.Module):
 
+
+class CNN(nn.Module):
     def __init__(self, n_observations):
         super(CNN, self).__init__()
         self.layer1 = nn.Linear(n_observations, 64)
@@ -13,7 +14,6 @@ class CNN(nn.Module):
         self.layer5 = nn.Linear(8, 1)
 
     def forward(self, x):
-
         x = self.relu(self.layer1(x))
         x = self.relu(self.layer2(x))
         x = self.relu(self.layer3(x))

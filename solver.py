@@ -9,13 +9,12 @@ from itertools import count
 import checkers_env
 import numpy as np
 
+
 class solver:
-
     def __init__(self, step_size, epsilon, env):
-
         self.step_size = step_size
         self.epsilon = epsilon
-        self.env = checkers_env.checkers_env( )
+        self.env = checkers_env.checkers_env()
         self.q_table = np.zeros(len(env.state_space), len(env.action_space))
 
     def solve(self, episode):
@@ -24,10 +23,9 @@ class solver:
             a = self.policy_improvement()
 
             # update Q value
-            q[state, action] =
+            # q[state, action] =
 
     def policy_improvement(self):
-
         return a
 
     def __init__(self, capacity, q_func, env, player):
@@ -61,7 +59,6 @@ class solver:
         transition = [state, action, next_state, reward]
         return transition
 
-
     def policy_improvement(self, state, epsilon, player):
         """
         With probability epsilon, choose a random action,
@@ -85,7 +82,7 @@ class solver:
             max_action = random.sample(self.env.possible_actions(player), 1)
         return max_action
 
-    def evaluation(self):
+    # def evaluation(self):
 
     def solve(self, episode, epsilon, batch_size):
         for t in episode:
@@ -97,8 +94,3 @@ class solver:
             samples = random.sample(self.memory, batch_size)
             self.policy_evaluation()
             self.q_func.fit()
-
-
-
-
-

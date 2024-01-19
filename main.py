@@ -3,20 +3,23 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import checkers_env
-
 import random
-
 import matplotlib.pyplot as plt
 import numpy as np
 import CNN
 
-board = np.array([[1, 0, 1, 0, 1, 0],
-                  [0, 1, 0, 1, 0, 1],
-                  [0, 0, 0, 0, 0, 0],
-                  [0, 0, 0, 0, 0, 0],
-                  [0, -1, 0, -1, 0, -1],
-                  [-1, 0, -1, 0, -1, 0]])
-"""
+board = np.array(
+    [
+        [1, 0, 1, 0, 1, 0],
+        [0, 1, 0, 1, 0, 1],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, -1, 0, -1, 0, -1],
+        [-1, 0, -1, 0, -1, 0],
+    ]
+)
+
+
 def initialize_board():
     # 1 and -1 represent the pieces of two players 1 and -1
     board = np.zeros((6, 6))
@@ -25,13 +28,13 @@ def initialize_board():
             board[i][j + (i % 2)] = 1
             board[6 - i - 1][j + (i % 2)] = -1
     return board
-"""
+
 
 env = checkers_env.checkers_env(board, 1)
 env.render()
 starters = env.possible_pieces(1)
 env.possible_actions(player=1)
-env.step([1, 1, 2, 0],1)
+env.step([1, 1, 2, 0], 1)
 env.render()
 
 # batch_size is the number of transitions sampled from the replay buffer
@@ -41,8 +44,8 @@ n_positions = 36
 appro = CNN(n_positions)
 appro.load_
 
+
 def logistic(samples, targets):
     clf = LogisticRegression()
     clf.fit(samples, targets)
     return clf
-
