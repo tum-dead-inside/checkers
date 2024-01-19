@@ -34,21 +34,30 @@ env = checkers_env.checkers_env(board, 1)
 env.render()
 starters = env.possible_pieces(1)
 env.possible_actions(player=1)
-env.step([1, 1, 2, 0], 1)
-print("\n")
-env.render()
-# second player
-env.step([4, 1, 3, 0], -1)
-print("\n")
-env.render()
-# first player moves piece at position 1, 3 to 2, 4
-env.step([1, 3, 2, 4], 1)
-print("\n")
-env.render()
-# second player moves piece at position 4, 3 to 3, 2
-env.step([4, 3, 3, 2], -1)
-print("\n")
-env.render()
+while True:
+    # player 1 move
+    print("\n")
+    list = env.possible_actions(1)
+    for i, action in enumerate(list):
+        print(i, action)
+    print("\n")
+    index = int(input("Choose action for player 1: "))
+    print("\n")
+    action = list[index]
+    env.step(action, 1)
+    env.render()
+    print("\n")
+
+    # player 2 move
+    list = env.possible_actions(-1)
+    for i, action in enumerate(list):
+        print(i, action)
+    print("\n")
+    index = int(input("Choose action for player 2: "))
+    print("\n")
+    action = list[index]
+    env.step(action, -1)
+    env.render()
 
 
 # batch_size is the number of transitions sampled from the replay buffer
