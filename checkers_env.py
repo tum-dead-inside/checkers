@@ -17,6 +17,7 @@ class checkers_env:
                       [0, -1, 0, -1, 0, -1],
                       [-1, 0, -1, 0, -1, 0]])
         self.player = 1
+    '''
     def initialize_board(self):
         # 1 and -1 represent the pieces of two players 1 and -1
         board = np.zeros((6, 6))
@@ -25,7 +26,7 @@ class checkers_env:
                 board[i][j + (i % 2)] = 1
                 board[6 - i - 1][j + (i % 2)] = -1
         return board
-
+    '''
     def possible_pieces(self, player):
         positions = []
         for i, row in enumerate(self.board):
@@ -46,13 +47,13 @@ class checkers_env:
                 if is_valid_position(nx, ny):
                     if self.board[nx][ny] == 0:
                     # one-step
-                        actions.append([x,y,nx,ny])
+                        actions.append([x, y, nx, ny])
                     elif self.board[nx][ny] == -player:
                     # one jump
-                        jx, jy = x+2*dx, y+x*dy
+                        jx, jy = x+2*dx, y+2*dy
                         if is_valid_position(jx, jy):
                             if self.board[jx][jy] == 0:
-                                actions.append([x,y,jx,jy])
+                                actions.append([x, y, jx, jy])
         return actions
 
     def get_piece(self, action):
