@@ -81,7 +81,7 @@ class checkers_env:
             self.board[row1][co1] = 0
             self.board[row2][co2] = player
             self.get_piece(action)
-            if self.game_winner() == player:
+            if self.game_winner(self.board) == player:
                 reward = 1
             else:
                 reward = 0
