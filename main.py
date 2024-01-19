@@ -6,7 +6,7 @@ import checkers_env
 import random
 import matplotlib.pyplot as plt
 import numpy as np
-import CNN
+from CNN import CNN
 
 board = np.array(
     [
@@ -35,17 +35,32 @@ env.render()
 starters = env.possible_pieces(1)
 env.possible_actions(player=1)
 env.step([1, 1, 2, 0], 1)
+print("\n")
 env.render()
+# second player
+env.step([4, 1, 3, 0], -1)
+print("\n")
+env.render()
+# first player moves piece at position 1, 3 to 2, 4
+env.step([1, 3, 2, 4], 1)
+print("\n")
+env.render()
+# second player moves piece at position 4, 3 to 3, 2
+env.step([4, 3, 3, 2], -1)
+print("\n")
+env.render()
+
 
 # batch_size is the number of transitions sampled from the replay buffer
 batch_size = 64
 n_positions = 36
 
-appro = CNN(n_positions)
-appro.load_
+# appro = CNN(n_positions)
+# torch.save(appro.state_dict(), "model.pth")
+# appro.load_state_dict(torch.load("model.pth"))
 
 
-def logistic(samples, targets):
-    clf = LogisticRegression()
-    clf.fit(samples, targets)
-    return clf
+# def logistic(samples, targets):
+#     clf = LogisticRegression()
+#     clf.fit(samples, targets)
+#     return clf
