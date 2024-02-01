@@ -48,7 +48,6 @@ while True:
     env.render()
     print("\n")
     
-
     # player 2 move
     list = env.possible_actions(-1)
     for i, action in enumerate(list):
