@@ -33,3 +33,10 @@ MOVE_OFFSETS = [Point(-1, -1), Point(1, -1), Point(-1, 1), Point(1, 1)]
 # using an array to make it easier to add new types of pieces (e.g. king)
 WHITE_PIECES = [PieceType.WHITE_PIECE]
 BLACK_PIECES = [PieceType.BLACK_PIECE]
+
+# constants for RL
+LEARNING_RATE = 0.001
+BATCH_SIZE = 64
+GAMMA = 0.99
+EPSILON = 0.1
+REPLAY_BUFFER_SIZE = 10000

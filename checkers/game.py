@@ -3,16 +3,29 @@ from PIL import Image, ImageTk
 from random import choice
 from pathlib import Path
 from math import inf
+import torch
+import torch.optim as optim
+from typing import List
+import random
 
 from checkers.board import Board
-from checkers.rules import Move, PieceType, SideType
+from checkers.rules import Move, PieceType, SideType, Point
 from checkers.constants import *
+from checkers.dqn import DQN, ReplayBuffer, train_dqn
+from checkers.experience import Experience
 
 
 class Game:
     def __init__(self, canvas: Canvas, x_board_size: int, y_board_size: int):
         self.__canvas = canvas
         self.__board = Board(x_board_size, y_board_size)
+
+        # DQN and ReplayBuffer setup
+        input_size = x_board_size * y_board_size
+        output_size = len(MOVE_OFFSETS)
+        self.dqn = DQN(input_size, output_size)
+        self.optimizer = optim.Adam(self.dqn.parameters(), lr=LEARNING_RATE)
+        self.replay_buffer = ReplayBuffer(REPLAY_BUFFER_SIZE)
 
         self.__player_turn = True
 
@@ -186,9 +199,62 @@ class Game:
             # if the player clicks on a cell the selected piece can move to
             if move in self.__get_moves_list(PLAYER_SIDE):
                 self.__handle_player_turn(move)
+                self.__update_replay_buffer()
+                self.__train_dqn()
 
                 if not (self.__player_turn):
                     self.__handle_enemy_turn()
+
+    def __update_replay_buffer(self):
+            """Update the replay buffer with the current state, action, reward, and next state"""
+            # convert the current state, action, reward, and next state to tensors
+            state = torch.tensor([self.__get_flattened_state()], dtype=torch.float32)
+            action = torch.tensor([self.__selected_action()], dtype=torch.long)
+            reward = torch.tensor([self.__calculate_reward()], dtype=torch.float32)
+            next_state = torch.tensor([self.__get_flattened_state()], dtype=torch.float32)
+
+            experience = Experience(state, action, reward, next_state)
+            self.replay_buffer.push(experience) # add the experience to the replay buffer
+
+    def __train_dqn(self):
+        """"Train the DQN using the replay buffer"""
+        train_dqn(self.dqn, self.replay_buffer, BATCH_SIZE, GAMMA, self.optimizer)
+
+    def __get_flattened_state(self):
+        """"Get the flattened representation of the current game state"""
+        state = []
+        for y in range(self.__board.y_size):
+            for x in range(self.__board.x_size):
+                piece_type = self.__board.type_at(x, y).value
+                state.append(piece_type)
+        return state
+
+    def __selected_action(self):
+        """"Select the action with the highest Q-value for the current state"""
+        # use epsilon-greedy strategy for action selection
+        epsilon = EPSILON
+        if random.random() < epsilon:
+            return random.randint(0, len(MOVE_OFFSETS) - 1)
+        else:
+            # get the Q-values for the current state
+            state = torch.tensor([self.__get_flattened_state()], dtype=torch.float32)
+            q_values = self.dqn(state)
+            # select the action with the highest Q-value
+            return torch.argmax(q_values).item()
+
+    def __calculate_reward(self):
+        """Calculate the reward for the current game state"""
+        # TODO: calculate the reward based on the current game state
+        # the current implementation is just a placeholder
+        white_score = self.__board.white_score
+        black_score = self.__board.black_score
+        if PLAYER_SIDE == SideType.WHITE:
+            reward = white_score - black_score
+        elif PLAYER_SIDE == SideType.BLACK:
+            reward = black_score - white_score
+        else:
+            reward = 0
+        return reward
 
     def __handle_move(self, move: Move, draw: bool = True) -> bool:
         """Move a piece from one cell to another"""
@@ -265,12 +331,14 @@ class Game:
             # white lost
             messagebox.showinfo("Game Over", "The black pieces won!")
             game_over = True
+            exit()
 
         black_moves_list = self.__get_moves_list(SideType.BLACK)
         if not (black_moves_list):
             # black lost
             messagebox.showinfo("Game Over", "The white pieces won!")
             game_over = True
+            exit()
 
         if game_over:
             # new game
@@ -450,3 +518,12 @@ class Game:
                             moves_list.append(Move(x, y, x + offset.x, y + offset.y))
 
         return moves_list
+
+    def get_flattened_state(self) -> List[int]:
+        """Get the flattened representation of the current game state"""
+        state = []
+        for y in range(self.__board.y_size):
+            for x in range(self.__board.x_size):
+                piece_type = self.__board.type_at(x, y).value
+                state.append(piece_type)
+        return state
