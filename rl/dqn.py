@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import random
-from checkers.experience import Experience
+from rl.experience import Experience
 
 
 class DQN(nn.Module):

@@ -11,8 +11,8 @@ import random
 from checkers.board import Board
 from checkers.rules import Move, PieceType, SideType, Point
 from checkers.constants import *
-from checkers.dqn import DQN, ReplayBuffer, train_dqn
-from checkers.experience import Experience
+from rl.dqn import DQN, ReplayBuffer, train_dqn
+from rl.experience import Experience
 
 
 class Game:
