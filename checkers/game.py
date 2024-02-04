@@ -17,6 +17,48 @@ from checkers.experience import Experience
 
 class Game:
     def __init__(self, canvas: Canvas, x_board_size: int, y_board_size: int):
+        """
+        Initializes a new instance of the Game class.
+
+        Args:
+            canvas (Canvas): The canvas object to draw the game on.
+            x_board_size (int): The number of columns on the game board.
+            y_board_size (int): The number of rows on the game board.
+        """
+        self.__canvas = canvas
+        self.__board = Board(x_board_size, y_board_size)
+
+        # DQN and ReplayBuffer setup
+        input_size = x_board_size * y_board_size
+        output_size = len(MOVE_OFFSETS)
+        self.dqn = DQN(input_size, output_size)
+        self.optimizer = optim.Adam(self.dqn.parameters(), lr=LEARNING_RATE)
+        self.replay_buffer = ReplayBuffer(REPLAY_BUFFER_SIZE)
+
+        self.__player_turn = True
+
+        self.__hovered_cell = Point()
+        self.__selected_cell = Point()
+        self.__animated_cell = Point()
+
+        self.__init_images()
+
+        self.__draw()
+
+        if PLAYER_SIDE == SideType.BLACK:
+            self.__handle_enemy_turn()
+
+
+class Game:
+    def __init__(self, canvas: Canvas, x_board_size: int, y_board_size: int):
+        """
+        Initializes a new instance of the Game class.
+
+        Args:
+            canvas (Canvas): The canvas object to draw the game on.
+            x_board_size (int): The number of columns on the game board.
+            y_board_size (int): The number of rows on the game board.
+        """
         self.__canvas = canvas
         self.__board = Board(x_board_size, y_board_size)
 
@@ -41,7 +83,15 @@ class Game:
             self.__handle_enemy_turn()
 
     def __init_images(self):
-        """Initialize images"""
+        """Initialize images.
+
+        This method initializes the images used in the game. It creates a dictionary
+        of images, where the keys are the piece types (WHITE_PIECE and BLACK_PIECE)
+        and the values are the corresponding image objects.
+
+        Returns:
+            None
+        """
         self.__images = {
             PieceType.WHITE_PIECE: ImageTk.PhotoImage(
                 Image.open(Path("assets", "white-piece.png")).resize(
@@ -56,7 +106,14 @@ class Game:
         }
 
     def __animate_move(self, move: Move):
-        """Animate the piece's movement"""
+        """Animate the piece's movement
+
+        Args:
+            move (Move): The move object representing the piece's movement.
+
+        Returns:
+            None
+        """
         self.__animated_cell = Point(move.from_x, move.from_y)
         self.__draw()
 
@@ -92,7 +149,20 @@ class Game:
         self.__draw_pieces()
 
     def __draw_board_grid(self):
-        """Draw the board grid"""
+        """Draw the board grid.
+
+        This method is responsible for drawing the grid of the game board on the canvas.
+        It iterates over each cell in the board and creates rectangles to represent the cells.
+        The color of each cell is determined by the BOARD_COLORS list.
+        If a cell is selected or hovered, a border is drawn around it using the SELECT_BORDER_COLOR or HOVER_BORDER_COLOR.
+        If a cell is selected, possible move circles are drawn on the cells where the player can move.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         for y in range(self.__board.y_size):
             for x in range(self.__board.x_size):
                 self.__canvas.create_rectangle(
@@ -146,7 +216,17 @@ class Game:
                             )
 
     def __draw_pieces(self):
-        """Draw the pieces on the board"""
+        """Draw the pieces on the board.
+
+        This method iterates over the cells of the board and draws the pieces on the canvas.
+        It skips drawing empty cells and the animated piece.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         for y in range(self.__board.y_size):
             for x in range(self.__board.x_size):
                 # don't draw empty cells and the animated piece
@@ -172,7 +252,14 @@ class Game:
                 self.__draw()
 
     def mouse_down(self, event: Event):
-        """Mouse click event"""
+        """Handles the mouse click event.
+
+        Args:
+            event (Event): The mouse click event.
+
+        Returns:
+            None
+        """
         if not (self.__player_turn):
             return
 
@@ -206,22 +293,29 @@ class Game:
                     self.__handle_enemy_turn()
 
     def __update_replay_buffer(self):
-            """Update the replay buffer with the current state, action, reward, and next state"""
-            # convert the current state, action, reward, and next state to tensors
-            state = torch.tensor([self.__get_flattened_state()], dtype=torch.float32)
-            action = torch.tensor([self.__selected_action()], dtype=torch.long)
-            reward = torch.tensor([self.__calculate_reward()], dtype=torch.float32)
-            next_state = torch.tensor([self.__get_flattened_state()], dtype=torch.float32)
+        """Update the replay buffer with the current state, action, reward, and next state.
 
-            experience = Experience(state, action, reward, next_state)
-            self.replay_buffer.push(experience) # add the experience to the replay buffer
+        This method converts the current state, action, reward, and next state into tensors and adds them to the replay buffer.
+        """
+        # convert the current state, action, reward, and next state to tensors
+        state = torch.tensor([self.__get_flattened_state()], dtype=torch.float32)
+        action = torch.tensor([self.__selected_action()], dtype=torch.long)
+        reward = torch.tensor([self.__calculate_reward()], dtype=torch.float32)
+        next_state = torch.tensor([self.__get_flattened_state()], dtype=torch.float32)
+
+        experience = Experience(state, action, reward, next_state)
+        self.replay_buffer.push(experience)  # add the experience to the replay buffer
 
     def __train_dqn(self):
-        """"Train the DQN using the replay buffer"""
+        """ "Train the DQN using the replay buffer"""
         train_dqn(self.dqn, self.replay_buffer, BATCH_SIZE, GAMMA, self.optimizer)
 
     def __get_flattened_state(self):
-        """"Get the flattened representation of the current game state"""
+        """Get the flattened representation of the current game state.
+
+        Returns:
+            list: A list containing the piece types of each position on the board.
+        """
         state = []
         for y in range(self.__board.y_size):
             for x in range(self.__board.x_size):
@@ -230,7 +324,11 @@ class Game:
         return state
 
     def __selected_action(self):
-        """"Select the action with the highest Q-value for the current state"""
+        """Select the action with the highest Q-value for the current state.
+
+        Returns:
+            int: The index of the selected action.
+        """
         # use epsilon-greedy strategy for action selection
         epsilon = EPSILON
         if random.random() < epsilon:
@@ -257,7 +355,15 @@ class Game:
         return reward
 
     def __handle_move(self, move: Move, draw: bool = True) -> bool:
-        """Move a piece from one cell to another"""
+        """Move a piece from one cell to another.
+
+        Args:
+            move (Move): The move object containing the coordinates of the piece to be moved.
+            draw (bool, optional): Indicates whether to animate and draw the move. Defaults to True.
+
+        Returns:
+            bool: True if a piece was killed during the move, False otherwise.
+        """
         if draw:
             self.__animate_move(move)
 
@@ -287,7 +393,14 @@ class Game:
         return has_killed_piece
 
     def __handle_player_turn(self, move: Move):
-        """Handle the player's turn"""
+        """Handle the player's turn.
+
+        Args:
+            move (Move): The move made by the player.
+
+        Returns:
+            None
+        """
         self.__player_turn = False
 
         # check if the player killed a piece
@@ -308,7 +421,14 @@ class Game:
         self.__selected_cell = Point()
 
     def __handle_enemy_turn(self):
-        """Handle the enemy's turn (computer)"""
+        """Handle the enemy's turn (computer)
+
+        This method is responsible for handling the enemy's turn in the game. It sets the player's turn to False,
+        predicts the optimal moves for the enemy using the __predict_optimal_moves method, and then handles each move
+        by calling the __handle_move method. After all the moves are handled, it sets the player's turn back to True
+        and checks for game over.
+
+        """
         self.__player_turn = False
 
         optimal_moves_list = self.__predict_optimal_moves(
@@ -323,7 +443,13 @@ class Game:
         self.__check_for_game_over()
 
     def __check_for_game_over(self):
-        """Check if the game is over"""
+        """Check if the game is over.
+
+        This method checks if the game is over by checking if there are any valid moves left for both the white and black sides.
+        If there are no valid moves left for either side, the game is considered over and a message box is displayed to indicate the winner.
+        If the game is over, a new game is initialized.
+
+        """
         game_over = False
 
         white_moves_list = self.__get_moves_list(SideType.WHITE)
@@ -345,7 +471,15 @@ class Game:
             self.__init__(self.__canvas, self.__board.x_size, self.__board.y_size)
 
     def __predict_optimal_moves(self, side: SideType) -> list[Move]:
-        """Predict the optimal move for the enemy side"""
+        """Predict the optimal move for the enemy side.
+
+        Args:
+            side (SideType): The side for which to predict the optimal move.
+
+        Returns:
+            list[Move]: A list of optimal moves.
+
+        """
         best_result = 0
         optimal_moves = []
         predicted_moves_list = self.__get_predicted_moves_list(side)
@@ -400,8 +534,19 @@ class Game:
         current_moves_list: list[Move] = [],
         required_moves_list: list[Move] = [],
     ) -> list[Move]:
-        """Predict all possible moves"""
+        """
+        Predict all possible moves.
 
+        Args:
+            side (SideType): The side for which to predict moves.
+            current_prediction_depth (int, optional): The current depth of prediction. Defaults to 0.
+            all_moves_list (list[Move], optional): The list to store all predicted moves. Defaults to [].
+            current_moves_list (list[Move], optional): The list to store the current moves being considered. Defaults to [].
+            required_moves_list (list[Move], optional): The list of required moves for a piece. Defaults to [].
+
+        Returns:
+            list[Move]: The list of all predicted moves.
+        """
         if current_moves_list:
             all_moves_list.append(current_moves_list)
         else:
@@ -447,14 +592,28 @@ class Game:
         return all_moves_list
 
     def __get_moves_list(self, side: SideType) -> list[Move]:
-        """Get the list of moves"""
+        """Get the list of moves for the specified side.
+
+        Args:
+            side (SideType): The side for which to get the moves.
+
+        Returns:
+            list[Move]: The list of moves for the specified side.
+        """
         moves_list = self.__get_required_moves_list(side)
         if not (moves_list):
             moves_list = self.__get_optional_moves_list(side)
         return moves_list
 
     def __get_required_moves_list(self, side: SideType) -> list[Move]:
-        """Get the list of mandatory moves"""
+        """Get the list of mandatory moves.
+
+        Args:
+            side (SideType): The side for which to get the mandatory moves.
+
+        Returns:
+            list[Move]: The list of mandatory moves.
+        """
         moves_list = []
 
         if side == SideType.WHITE:
@@ -492,7 +651,15 @@ class Game:
         return moves_list
 
     def __get_optional_moves_list(self, side: SideType) -> list[Move]:
-        """Get the list of other moves"""
+        """Get the list of optional moves for a given side.
+
+        Args:
+            side (SideType): The side for which to get the optional moves.
+
+        Returns:
+            list[Move]: The list of optional moves.
+
+        """
         moves_list = []
 
         if side == SideType.WHITE:
@@ -520,7 +687,11 @@ class Game:
         return moves_list
 
     def get_flattened_state(self) -> List[int]:
-        """Get the flattened representation of the current game state"""
+        """Get the flattened representation of the current game state.
+
+        Returns:
+            List[int]: A list of integers representing the piece types in the game state.
+        """
         state = []
         for y in range(self.__board.y_size):
             for x in range(self.__board.x_size):
