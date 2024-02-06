@@ -48,40 +48,6 @@ class Game:
         if PLAYER_SIDE == SideType.BLACK:
             self.__handle_enemy_turn()
 
-
-class Game:
-    def __init__(self, canvas: Canvas, x_board_size: int, y_board_size: int):
-        """
-        Initializes a new instance of the Game class.
-
-        Args:
-            canvas (Canvas): The canvas object to draw the game on.
-            x_board_size (int): The number of columns on the game board.
-            y_board_size (int): The number of rows on the game board.
-        """
-        self.__canvas = canvas
-        self.__board = Board(x_board_size, y_board_size)
-
-        # DQN and ReplayBuffer setup
-        input_size = x_board_size * y_board_size
-        output_size = len(MOVE_OFFSETS)
-        self.dqn = DQN(input_size, output_size)
-        self.optimizer = optim.Adam(self.dqn.parameters(), lr=LEARNING_RATE)
-        self.replay_buffer = ReplayBuffer(REPLAY_BUFFER_SIZE)
-
-        self.__player_turn = True
-
-        self.__hovered_cell = Point()
-        self.__selected_cell = Point()
-        self.__animated_cell = Point()
-
-        self.__init_images()
-
-        self.__draw()
-
-        if PLAYER_SIDE == SideType.BLACK:
-            self.__handle_enemy_turn()
-
     def __init_images(self):
         """Initialize images.
 
