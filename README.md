@@ -36,3 +36,6 @@ python3 main.py
 # Simplifications Made
 - No "kinged" pieces
 - 6x6 board instead of 8x8 (this can be changed in the code in the `checkers/constants.py` file)
+
+# Credits
+https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
