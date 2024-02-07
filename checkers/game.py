@@ -1,18 +1,20 @@
-from tkinter import Canvas, Event, messagebox
-from PIL import Image, ImageTk
-from random import choice
-from pathlib import Path
-from math import inf
 import torch
 import torch.optim as optim
-from typing import List
 import random
+import logging
 
 from checkers.board import Board
 from checkers.rules import Move, PieceType, SideType, Point
 from checkers.constants import *
 from rl.dqn import DQN, ReplayBuffer, train_dqn
 from rl.experience import Experience
+from tkinter import Canvas, Event, messagebox
+from PIL import Image, ImageTk
+from random import choice
+from pathlib import Path
+from math import inf
+from typing import List
+from datetime import date
 
 
 class Game:
@@ -40,6 +42,17 @@ class Game:
         self.__hovered_cell = Point()
         self.__selected_cell = Point()
         self.__animated_cell = Point()
+
+        # Store the current model reward
+        self.__total_model_reward = 0.0
+        self.__previous_white_pieces = 0
+        self.__previous_black_pieces = 0
+
+        # Create log file if it doesn't exist
+        file_name = f"./logs/log-{date.today()}.log"
+        open(file=file_name, mode="a").close()
+        # Configure logger
+        logging.basicConfig(filename=file_name, encoding="utf-8", level=logging.INFO)
 
         self.__init_images()
 
@@ -308,17 +321,27 @@ class Game:
 
     def __calculate_reward(self):
         """Calculate the reward for the current game state"""
-        # TODO: calculate the reward based on the current game state
-        # the current implementation is just a placeholder
         white_score = self.__board.white_score
         black_score = self.__board.black_score
-        if PLAYER_SIDE == SideType.WHITE:
-            reward = white_score - black_score
-        elif PLAYER_SIDE == SideType.BLACK:
-            reward = black_score - white_score
-        else:
-            reward = 0
-        return reward
+        # don't update reward if nothing happend with the number of pieces from the both sides
+        if (
+            self.__previous_black_pieces == black_score
+            and self.__previous_white_pieces == white_score
+        ):
+            return self.__total_model_reward
+
+        # update the reward according to the game status
+        if white_score > black_score:
+            self.__total_model_reward -= 1
+        if white_score < black_score:
+            self.__total_model_reward += 1
+        if white_score == black_score:
+            self.__total_model_reward += 0.5
+
+        # save the current number of pieces for the next iteration
+        self.__previous_white_pieces = white_score
+        self.__previous_black_pieces = black_score
+        return self.__total_model_reward
 
     def __handle_move(self, move: Move, draw: bool = True) -> bool:
         """Move a piece from one cell to another.
@@ -402,6 +425,8 @@ class Game:
         )
 
         for move in optimal_moves_list:
+            print(f"Move: {move} | Reward: {self.__total_model_reward}")
+            logging.info(f"Move: {move} | Reward: {self.__total_model_reward}")
             self.__handle_move(move)
 
         self.__player_turn = True
@@ -423,6 +448,7 @@ class Game:
             # white lost
             messagebox.showinfo("Game Over", "The black pieces won!")
             game_over = True
+            logging.info("BLACK WON")
             exit()
 
         black_moves_list = self.__get_moves_list(SideType.BLACK)
@@ -430,10 +456,12 @@ class Game:
             # black lost
             messagebox.showinfo("Game Over", "The white pieces won!")
             game_over = True
+            logging.info("WHITE WON")
             exit()
 
         if game_over:
             # new game
+            logging.info("RESET")
             self.__init__(self.__canvas, self.__board.x_size, self.__board.y_size)
 
     def __predict_optimal_moves(self, side: SideType) -> list[Move]:
@@ -447,10 +475,12 @@ class Game:
 
         """
         best_result = 0
+        # temporal optimal moves, will be filtered later
         optimal_moves = []
         predicted_moves_list = self.__get_predicted_moves_list(side)
 
         if predicted_moves_list:
+            # make a copy of the board before the moves iteration
             board_copy = Board.copy(self.__board)
             for moves in predicted_moves_list:
                 for move in moves:
@@ -471,8 +501,10 @@ class Game:
                 elif result == best_result:
                     optimal_moves.append(moves)
 
+                # reset the game board to the previous state
                 self.__board = Board.copy(board_copy)
 
+        # final optional moves
         optimal_move = []
         if optimal_moves:
             # filter the moves that kills the most pieces
@@ -480,14 +512,11 @@ class Game:
                 if (
                     side == SideType.WHITE
                     and self.__board.type_at(move.from_x, move.from_y) in BLACK_PIECES
-                ):
-                    break
-                elif (
-                    side == SideType.BLACK
+                    or side == SideType.BLACK
                     and self.__board.type_at(move.from_x, move.from_y) in WHITE_PIECES
                 ):
                     break
-
+                #  usually there is only one move, but can be more
                 optimal_move.append(move)
 
         return optimal_move
